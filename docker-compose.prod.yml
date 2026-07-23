@@ -1,0 +1,26 @@
+# Production override for Dokploy deployment
+# Attaches every service to dokploy-network so Traefik can route to
+# nextcloud. Note: giving a service an explicit `networks:` key drops it
+# off the implicit default network entirely, so all four services need
+# it here too, or they'd lose the ability to reach each other by name.
+
+services:
+  db:
+    networks:
+      - dokploy-network
+
+  redis:
+    networks:
+      - dokploy-network
+
+  nextcloud:
+    networks:
+      - dokploy-network
+
+  cron:
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true

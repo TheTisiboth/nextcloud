@@ -84,9 +84,18 @@ Edit `.env`:
 2. In Dokploy, create a new **Docker Compose** application pointing at
    the repo, and load your `.env` values into Dokploy's environment
    variables UI for that app.
-3. Deploy. Confirm all four services (`db`, `redis`, `nextcloud`, `cron`)
+3. In the app's **Compose Path** field, list both compose files so
+   Dokploy merges them like `-f docker-compose.yml -f docker-compose.prod.yml`:
+   ```
+   docker-compose.yml,docker-compose.prod.yml
+   ```
+   `docker-compose.prod.yml` attaches every service to Dokploy's
+   `dokploy-network` so Traefik can route to `nextcloud` -- it's kept
+   separate from the base file so the stack still runs standalone
+   (e.g. for local testing) without depending on that external network.
+4. Deploy. Confirm all four services (`db`, `redis`, `nextcloud`, `cron`)
    report healthy in Dokploy/`docker compose ps`.
-4. **The bind-mount path must exist with correct ownership on whichever
+5. **The bind-mount path must exist with correct ownership on whichever
    physical node Dokploy actually schedules the container on** -- confirm
    that's your Pi, since a bind mount won't materialize the HDD path on a
    different machine.
@@ -115,16 +124,14 @@ runs `/cron.sh`, executing background jobs every ~5 minutes automatically.
 
 1. In Dokploy's **Domains** tab for this application, add your domain,
    pointing at the `nextcloud` service, container port `80`, with Let's
-   Encrypt enabled.
-2. **If the domain doesn't route:** some Dokploy versions require its
-   internal `dokploy-network` to be explicitly attached to the `nextcloud`
-   service in `docker-compose.yml`. This isn't guaranteed to be zero-config
-   across all Dokploy releases -- check your version's docs if routing
-   fails, and add the network there if needed.
-3. Update `NEXTCLOUD_TRUSTED_DOMAINS` in `.env` to include the new domain
+   Encrypt enabled. This works out of the box as long as the `Compose
+   Path` includes `docker-compose.prod.yml` (step 4) -- that's what
+   attaches `nextcloud` to Dokploy's `dokploy-network` so Traefik can
+   reach it.
+2. Update `NEXTCLOUD_TRUSTED_DOMAINS` in `.env` to include the new domain
    and redeploy -- this one *is* re-applied automatically on every
    container start.
-4. Set the reverse-proxy/overwrite config once (these are **not**
+3. Set the reverse-proxy/overwrite config once (these are **not**
    auto-read from environment variables by the Nextcloud image, unlike
    trusted domains):
 
