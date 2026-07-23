@@ -49,10 +49,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      OVERWRITEPROTOCOL: ${OVERWRITEPROTOCOL:-}
+      OVERWRITECLIURL: ${OVERWRITECLIURL:-}
+      OVERWRITEHOST: ${OVERWRITEHOST:-}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
       - ./config/redis.config.php:/var/www/html/config/redis.config.php:ro
+      - ./config/proxy.config.php:/var/www/html/config/proxy.config.php:ro
     healthcheck:
       test: ["CMD", "php", "/var/www/html/occ", "status"]
       interval: 30s
@@ -77,10 +82,15 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+      OVERWRITEPROTOCOL: ${OVERWRITEPROTOCOL:-}
+      OVERWRITECLIURL: ${OVERWRITECLIURL:-}
+      OVERWRITEHOST: ${OVERWRITEHOST:-}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
       - ./config/redis.config.php:/var/www/html/config/redis.config.php:ro
+      - ./config/proxy.config.php:/var/www/html/config/proxy.config.php:ro
 
 volumes:
   db_data:

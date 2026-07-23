@@ -128,21 +128,14 @@ runs `/cron.sh`, executing background jobs every ~5 minutes automatically.
    Path` includes `docker-compose.prod.yml` (step 4) -- that's what
    attaches `nextcloud` to Dokploy's `dokploy-network` so Traefik can
    reach it.
-2. Update `NEXTCLOUD_TRUSTED_DOMAINS` in `.env` to include the new domain
-   and redeploy -- this one *is* re-applied automatically on every
-   container start.
-3. Set the reverse-proxy/overwrite config once (these are **not**
-   auto-read from environment variables by the Nextcloud image, unlike
-   trusted domains):
-
-   ```bash
-   docker exec -u www-data <nextcloud_container_name> php occ config:system:set overwriteprotocol --value="https"
-   docker exec -u www-data <nextcloud_container_name> php occ config:system:set overwrite.cli.url --value="https://cloud.example.com"
-   docker exec -u www-data <nextcloud_container_name> php occ config:system:set overwritehost --value="cloud.example.com"
-   docker exec -u www-data <nextcloud_container_name> php occ config:system:set trusted_proxies 0 --value="<dokploy-traefik-network-cidr>"
-   ```
-
-   Find the CIDR with `docker network inspect <dokploy-network-name>`.
+2. In `.env`, set `NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL=https`,
+   `OVERWRITECLIURL=https://<your-domain>`, `OVERWRITEHOST=<your-domain>`,
+   and `TRUSTED_PROXIES=<dokploy-network-cidr>` (find the CIDR with
+   `docker network inspect dokploy-network | grep Subnet`).
+3. Redeploy. All of this is applied automatically -- `NEXTCLOUD_TRUSTED_DOMAINS`
+   directly by the Nextcloud image, and the other four via
+   `config/proxy.config.php`, which is merged into Nextcloud's config on
+   every start. No manual `occ` commands needed.
 
 ## 8. Moving to a different disk later
 
