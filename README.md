@@ -9,6 +9,16 @@ card capacity/wear.
 **Stack:** Nextcloud (Apache) + PostgreSQL + Redis (object cache + file
 locking) + a dedicated cron container for background jobs.
 
+**How custom config gets applied:** `config/redis.config.php` and
+`config/proxy.config.php` are bind-mounted read-only to `/custom-config`
+(not directly into Nextcloud's `config/` directory -- a bind mount
+sitting there before Nextcloud's own install step runs breaks its
+ability to write that directory at all). A `before-starting` hook script
+(`hooks/before-starting/apply-custom-config.sh`) copies them into
+`/var/www/html/config/` and fixes ownership *after* Nextcloud's own init
+has finished, right before Apache starts. From there Nextcloud merges
+every `config/*.config.php` file automatically.
+
 ## 1. Prerequisites
 
 - Raspberry Pi 5, Raspberry Pi OS (64-bit), Docker + Docker Compose installed

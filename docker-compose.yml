@@ -58,8 +58,8 @@ services:
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
-      - ./config/redis.config.php:/var/www/html/config/redis.config.php
-      - ./config/proxy.config.php:/var/www/html/config/proxy.config.php
+      - ./config:/custom-config:ro
+      - ./hooks/before-starting:/docker-entrypoint-hooks.d/before-starting:ro
     healthcheck:
       test: ["CMD", "php", "/var/www/html/occ", "status"]
       interval: 30s
@@ -76,6 +76,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      nextcloud:
+        condition: service_healthy
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -91,8 +93,6 @@ services:
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
-      - ./config/redis.config.php:/var/www/html/config/redis.config.php
-      - ./config/proxy.config.php:/var/www/html/config/proxy.config.php
 
 volumes:
   db_data:
