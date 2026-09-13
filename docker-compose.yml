@@ -32,6 +32,7 @@ services:
 
   nextcloud:
     image: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       db:
@@ -70,6 +71,7 @@ services:
 
   cron:
     image: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+    pull_policy: always
     restart: unless-stopped
     entrypoint: /cron.sh
     depends_on:

@@ -83,8 +83,8 @@ Edit `.env`:
 - Set `APP_PORT` to whatever host port you want Nextcloud reachable on.
 - Check [hub.docker.com/_/nextcloud](https://hub.docker.com/_/nextcloud)
   for the current stable major version and set `NEXTCLOUD_IMAGE_TAG`
-  accordingly (e.g. `30-apache`). Don't use a floating tag long-term --
-  Nextcloud can't skip major versions on upgrade.
+  accordingly, as a major tag (e.g. `34-apache`) -- never `apache` or
+  `latest`, Nextcloud can't skip major versions. See [Updating](#9-updating).
 
 `.env` is git-ignored -- never commit it.
 
@@ -153,3 +153,38 @@ Mount the new disk, `chown -R 33:33` it, stop the stack, copy the data
 across, update `NEXTCLOUD_DATA_DIR_HOST` in `.env`, and redeploy. No
 `docker-compose.yml` edits are needed -- the data location is entirely
 driven by that one variable.
+
+## 9. Updating
+
+The admin UI's web updater is intentionally disabled in the Docker image --
+don't enable it. The code in the `nextcloud_html` volume must match the
+image version; if the volume gets ahead of the image, the entrypoint
+refuses to start. Updates always go through the image: change/pull the
+image, redeploy, and the entrypoint runs `occ upgrade` automatically.
+
+Use Dokploy **Deploy**, not **Restart** -- Restart neither recreates the
+containers nor pulls a new image.
+
+**Patch/minor (e.g. 34.0.1 → 34.0.4, 34.x):**
+
+1. Back up the DB and config:
+   ```bash
+   docker exec <db_container> pg_dump -U <POSTGRES_USER> <POSTGRES_DB> > ~/nextcloud-db-backup-$(date +%F).sql
+   docker cp <nextcloud_container>:/var/www/html/config ~/nextcloud-config-backup-$(date +%F)
+   ```
+2. Click **Deploy** in Dokploy. `pull_policy: always` fetches the newest
+   image for the major tag (`34-apache`).
+3. Verify:
+   ```bash
+   docker exec -u www-data <nextcloud_container> php occ status
+   ```
+   Expect the new `versionstring`, `maintenance: false`,
+   `needsDbUpgrade: false`.
+
+**Major (e.g. 34 → 35):**
+
+1. Only once Settings → Administration → Overview reports all installed
+   apps compatible with the next major.
+2. Back up (as above), bump `NEXTCLOUD_IMAGE_TAG` one major at a time
+   (`34-apache` → `35-apache`) in Dokploy's environment, Deploy, verify.
+3. Repeat for each further major -- never skip one.
