@@ -5,7 +5,7 @@ set -e
 
 occ() { php /var/www/html/occ "$@"; }
 
-occ background:job:mode cron
+occ background:cron
 
 # ExApps need a Docker deploy daemon we don't run
 if occ app:list --enabled | grep -q -- '- app_api:'; then
