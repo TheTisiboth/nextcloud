@@ -57,11 +57,21 @@ services:
       OVERWRITECLIURL: ${OVERWRITECLIURL:-}
       OVERWRITEHOST: ${OVERWRITEHOST:-}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_AUTHTYPE: ${SMTP_AUTHTYPE:-}
+      SMTP_NAME: ${SMTP_NAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
+      MAIL_DOMAIN: ${MAIL_DOMAIN:-}
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
       - ./config:/custom-config:ro
       - ./hooks/before-starting:/docker-entrypoint-hooks.d/before-starting:ro
+      - ./hooks/post-upgrade:/docker-entrypoint-hooks.d/post-upgrade:ro
+      - ./apache/hsts.conf:/etc/apache2/conf-enabled/hsts.conf:ro
     healthcheck:
       test: ["CMD", "php", "/var/www/html/occ", "status"]
       interval: 30s
@@ -94,6 +104,14 @@ services:
       OVERWRITECLIURL: ${OVERWRITECLIURL:-}
       OVERWRITEHOST: ${OVERWRITEHOST:-}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_AUTHTYPE: ${SMTP_AUTHTYPE:-}
+      SMTP_NAME: ${SMTP_NAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
+      MAIL_DOMAIN: ${MAIL_DOMAIN:-}
     volumes:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data

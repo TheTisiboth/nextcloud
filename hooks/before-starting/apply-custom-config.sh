@@ -7,8 +7,9 @@
 # directory at all -- copying in afterwards avoids that entirely.
 set -e
 
-cp /custom-config/redis.config.php /var/www/html/config/redis.config.php
-cp /custom-config/proxy.config.php /var/www/html/config/proxy.config.php
-
-chown www-data:www-data /var/www/html/config/redis.config.php /var/www/html/config/proxy.config.php
-chmod 640 /var/www/html/config/redis.config.php /var/www/html/config/proxy.config.php
+for src in /custom-config/*.config.php; do
+    dest=/var/www/html/config/$(basename "$src")
+    cp "$src" "$dest"
+    chown www-data:www-data "$dest"
+    chmod 640 "$dest"
+done

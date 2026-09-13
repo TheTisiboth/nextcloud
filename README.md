@@ -9,8 +9,8 @@ card capacity/wear.
 **Stack:** Nextcloud (Apache) + PostgreSQL + Redis (object cache + file
 locking) + a dedicated cron container for background jobs.
 
-**How custom config gets applied:** `config/redis.config.php` and
-`config/proxy.config.php` are bind-mounted read-only to `/custom-config`
+**How custom config gets applied:** the `config/*.config.php` snippets
+are bind-mounted read-only to `/custom-config`
 (not directly into Nextcloud's `config/` directory -- a bind mount
 sitting there before Nextcloud's own install step runs breaks its
 ability to write that directory at all). A `before-starting` hook script
@@ -85,6 +85,7 @@ Edit `.env`:
   for the current stable major version and set `NEXTCLOUD_IMAGE_TAG`
   accordingly, as a major tag (e.g. `34-apache`) -- never `apache` or
   `latest`, Nextcloud can't skip major versions. See [Updating](#9-updating).
+- Fill in the `SMTP_*` / `MAIL_*` block, see [Email](#10-email-gmail-smtp).
 
 `.env` is git-ignored -- never commit it.
 
@@ -116,19 +117,24 @@ Visit `http://<pi-ip>:<APP_PORT>` and log in with the admin credentials
 from `.env`. Under Settings → Administration → Overview, confirm there
 are no memcache/locking warnings (this verifies Redis is active).
 
-## 6. Enable cron-based background jobs (one-time)
+## 6. Instance defaults (automatic)
 
-AJAX cron (the default) only runs when someone has the page open. Switch
-to real cron, backed by the `cron` service in this stack:
+Everything the admin overview's setup checks ask for is applied by the
+repo, so a fresh install comes out configured -- no manual `occ` steps:
 
-```bash
-docker exec -u www-data <nextcloud_container_name> php occ background:job:mode cron
-```
+- `config/system.config.php`: maintenance window (01:00 UTC), default
+  phone region (`FR`), server ID.
+- `apache/hsts.conf`: `Strict-Transport-Security` header (only honoured by
+  browsers over HTTPS, harmless on plain LAN http).
+- `hooks/before-starting/configure-instance.sh` (every start, idempotent):
+  background jobs mode → `cron` (the `cron` service runs `/cron.sh` every
+  ~5 min), and disables `app_api` (ExApps need a Docker deploy daemon we
+  don't run).
+- `hooks/post-upgrade/repair-mimetypes.sh`: runs the expensive MIME-type
+  migrations that `occ upgrade` skips.
+- Email: SMTP env vars, see [Email](#10-email-gmail-smtp).
 
-(Equivalently: Settings → Administration → Basic settings → "Cron".)
-This setting is stored in the database, so it's a one-time step, not
-something that needs to run on every deploy. The `cron` container then
-runs `/cron.sh`, executing background jobs every ~5 minutes automatically.
+Intentionally left as warnings: 2FA not enforced.
 
 ## 7. Add a domain + HTTPS via Dokploy
 
@@ -188,3 +194,55 @@ containers nor pulls a new image.
 2. Back up (as above), bump `NEXTCLOUD_IMAGE_TAG` one major at a time
    (`34-apache` → `35-apache`) in Dokploy's environment, Deploy, verify.
 3. Repeat for each further major -- never skip one.
+
+## 10. Email (Gmail SMTP)
+
+Nextcloud sends password resets, share notifications and activity mails.
+The image's built-in `config/smtp.config.php` reads the `SMTP_*`/`MAIL_*`
+env vars at runtime, so mail setup lives in Dokploy's env, not the UI.
+
+**Get an app password:**
+
+1. Google account → Security → turn on **2-Step Verification** (app
+   passwords don't exist without it).
+2. Open <https://myaccount.google.com/apppasswords> (hidden from the menus;
+   unavailable with Advanced Protection or a Workspace admin restriction).
+3. Name it `Nextcloud` → Create → copy the 16-char password. It's shown
+   only once; drop the spaces.
+4. Revoke it from the same page anytime. Changing the Google account
+   password revokes all app passwords -- generate a new one and update
+   Dokploy.
+
+**Configure:**
+
+1. Dokploy → this app → Environment:
+   ```
+   SMTP_HOST=smtp.gmail.com
+   SMTP_SECURE=ssl
+   SMTP_PORT=465
+   SMTP_AUTHTYPE=LOGIN
+   SMTP_NAME=<you>@gmail.com
+   SMTP_PASSWORD=<16-char app password, no spaces>
+   MAIL_FROM_ADDRESS=<you>
+   MAIL_DOMAIN=gmail.com
+   ```
+   `MAIL_FROM_ADDRESS` is the local part only.
+2. **Deploy** (not Restart -- env changes need the containers recreated).
+3. Check it's applied:
+   ```bash
+   docker exec -u www-data <nextcloud_container> php occ config:list system | grep mail_
+   ```
+4. Personal settings → set the admin account's email address (the test
+   mail goes there).
+5. Administration → Basic settings → Email server → **Send email**.
+
+**Troubleshooting:**
+
+- `535 Username and Password not accepted`: wrong/revoked app password,
+  or 2-Step Verification off.
+- Timeout: outbound 465 blocked -- try `SMTP_SECURE=` (empty, STARTTLS)
+  with `SMTP_PORT=587`.
+- The sender must be the Gmail account or a verified "Send mail as"
+  alias, otherwise Gmail rewrites it.
+- Mail settings edited in the UI are overridden while the env vars are set.
+- Gmail caps sending at ~500 mails/day.
