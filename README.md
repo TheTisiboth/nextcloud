@@ -100,8 +100,8 @@ Edit `.env`:
    ```
    docker-compose.yml,docker-compose.prod.yml
    ```
-   `docker-compose.prod.yml` attaches every service to Dokploy's
-   `dokploy-network` so Traefik can route to `nextcloud` -- it's kept
+   `docker-compose.prod.yml` attaches the `nextcloud` service (only) to
+   Dokploy's `dokploy-network` so Traefik can route to it -- it's kept
    separate from the base file so the stack still runs standalone
    (e.g. for local testing) without depending on that external network.
 4. Deploy. Confirm all four services (`db`, `redis`, `nextcloud`, `cron`)
