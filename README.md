@@ -126,6 +126,8 @@ repo, so a fresh install comes out configured -- no manual `occ` steps:
   phone region (`FR`), server ID.
 - `apache/hsts.conf`: `Strict-Transport-Security` header (only honoured by
   browsers over HTTPS, harmless on plain LAN http).
+- `php/zz-disable-jit.ini`: turns off the PHP JIT, which segfaults the
+  Apache worker when an app is enabled. Mounted into `nextcloud` and `cron`.
 - `hooks/before-starting/configure-instance.sh` (every start, idempotent):
   background jobs mode → `cron` (the `cron` service runs `/cron.sh` every
   ~5 min), and disables `app_api` (ExApps need a Docker deploy daemon we
