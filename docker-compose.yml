@@ -31,8 +31,13 @@ services:
       start_period: 10s
 
   nextcloud:
-    image: nextcloud:${NEXTCLOUD_IMAGE_TAG}
-    pull_policy: always
+    image: nextcloud-ffmpeg:${NEXTCLOUD_IMAGE_TAG}
+    build:
+      context: .
+      pull: true
+      args:
+        NEXTCLOUD_IMAGE_TAG: ${NEXTCLOUD_IMAGE_TAG}
+    pull_policy: build
     restart: unless-stopped
     depends_on:
       db:
@@ -81,8 +86,13 @@ services:
       start_period: 60s
 
   cron:
-    image: nextcloud:${NEXTCLOUD_IMAGE_TAG}
-    pull_policy: always
+    image: nextcloud-ffmpeg:${NEXTCLOUD_IMAGE_TAG}
+    build:
+      context: .
+      pull: true
+      args:
+        NEXTCLOUD_IMAGE_TAG: ${NEXTCLOUD_IMAGE_TAG}
+    pull_policy: build
     restart: unless-stopped
     entrypoint: /cron.sh
     depends_on:
