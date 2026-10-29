@@ -77,7 +77,12 @@ services:
       - ./hooks/before-starting:/docker-entrypoint-hooks.d/before-starting:ro
       - ./hooks/post-upgrade:/docker-entrypoint-hooks.d/post-upgrade:ro
       - ./apache/hsts.conf:/etc/apache2/conf-enabled/hsts.conf:ro
+      - ./apache/mpm_prefork.conf:/etc/apache2/mods-available/mpm_prefork.conf:ro
       - ./php/zz-disable-jit.ini:/usr/local/etc/php/conf.d/zz-disable-jit.ini:ro
+    # Without a cap, a preview burst exhausts the Pi's RAM and hangs the whole
+    # host. With it, the kernel OOM-kills an Apache worker inside this
+    # container instead.
+    mem_limit: 2560m
     healthcheck:
       test: ["CMD", "php", "/var/www/html/occ", "status"]
       interval: 30s

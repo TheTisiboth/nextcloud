@@ -128,6 +128,13 @@ repo, so a fresh install comes out configured -- no manual `occ` steps:
   browsers over HTTPS, harmless on plain LAN http).
 - `php/zz-disable-jit.ini`: turns off the PHP JIT, which segfaults the
   Apache worker when an app is enabled. Mounted into `nextcloud` and `cron`.
+- Memory guards. Browsing a folder of photos/videos once took Nextcloud to
+  2.7 GiB and froze the Pi (2026-10-29):
+  - `config/preview.config.php`: at most 2 new previews (4 total) generated
+    at once, max 2048px.
+  - `apache/mpm_prefork.conf`: at most 16 Apache workers (image default 150).
+  - `mem_limit: 2560m` on `nextcloud`, so a spike gets an Apache worker
+    killed instead of hanging the host.
 - `hooks/before-starting/configure-instance.sh` (every start, idempotent):
   background jobs mode → `cron` (the `cron` service runs `/cron.sh` every
   ~5 min), and disables `app_api` (ExApps need a Docker deploy daemon we
