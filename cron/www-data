@@ -1,0 +1,6 @@
+# Mounted over the image's /var/spool/cron/crontabs/www-data (busybox crond).
+*/5 * * * * php -f /var/www/html/cron.php
+# Thumbnails for files added since the last run (previewgenerator app), so
+# browsing serves cached previews instead of generating them per request.
+# flock: never two runs at once. nice/ionice: browsing always wins.
+*/10 * * * * flock -n /tmp/preview-pregenerate.lock nice -n 19 ionice -c 2 -n 7 php /var/www/html/occ preview:pre-generate

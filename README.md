@@ -136,6 +136,17 @@ repo, so a fresh install comes out configured -- no manual `occ` steps:
   - `apache/mpm_prefork.conf`: at most 16 Apache workers (image default 150).
   - `mem_limit: 2560m` on `nextcloud`, so a spike gets an Apache worker
     killed instead of hanging the host.
+- Thumbnail pre-generation: the `previewgenerator` app is installed by
+  `configure-instance.sh`, and `cron/www-data` (mounted as the `cron`
+  service's crontab) runs `occ preview:pre-generate` every 10 min at lowest
+  CPU/IO priority, one run at a time. Browsing then serves cached previews.
+  The `cron` service is capped at `mem_limit: 1536m`. Sizes generated:
+  square 64/128/256, width 256/384, height 256; JPEG quality 60.
+  For files that existed before the app was installed, run once (takes
+  hours on the Pi):
+  ```bash
+  docker exec -u www-data <cron_container> nice -n 19 php occ preview:generate-all
+  ```
 - `hooks/before-starting/configure-instance.sh` (every start, idempotent):
   background jobs mode → `cron` (the `cron` service runs `/cron.sh` every
   ~5 min), and disables `app_api` (ExApps need a Docker deploy daemon we
