@@ -132,6 +132,9 @@ services:
       - nextcloud_html:/var/www/html
       - ${NEXTCLOUD_DATA_DIR_HOST}:/var/www/html/data
       - ./php/zz-disable-jit.ini:/usr/local/etc/php/conf.d/zz-disable-jit.ini:ro
+      - ./cron/www-data:/var/spool/cron/crontabs/www-data:ro
+    # Preview pre-generation runs here, one file at a time
+    mem_limit: 1536m
 
 volumes:
   db_data:
